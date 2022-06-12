@@ -1,4 +1,10 @@
 const express = require('express');
+const validatorHandler = require('../middlewares/validatorHandler');
+const {
+  createProductSchema,
+  editProductSchema,
+  getProductSchema,
+} = require('../utils/schemas/productsSchema');
 
 const ProductsSevice = require('../services/productsService');
 
@@ -10,20 +16,33 @@ router.get('/', async (req, res) => {
   res.json(products);
 });
 
-router.get('/:id', async (req, res) => {
-  const { id } = req.params;
-  const product = await ProductsSevice.findOne(id);
+router.get(
+  '/:id',
+  validatorHandler(getProductSchema, 'params'),
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const product = await ProductsSevice.findOne(id);
+      return res.status(200).json(product);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
-  if (!product) return res.status(404).json({ message: '404 Not found' });
-
-  return res.status(200).json(product);
-});
-
-router.post('/', async (req, res) => {
-  const body = req.body;
-  const newProduct = await ProductsSevice.create(body);
-  res.status(201).json({ message: 'Created', newProduct });
-});
+router.post(
+  '/',
+  validatorHandler(createProductSchema, 'body'),
+  async (req, res) => {
+    try {
+      const body = req.body;
+      const newProduct = await ProductsSevice.create(body);
+      return res.status(201).json({ message: 'Created', newProduct });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 router.patch('/:id', async (req, res) => {
   try {
